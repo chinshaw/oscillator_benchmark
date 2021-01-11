@@ -4,22 +4,19 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
-import io.ktor.features.CallLogging
-import io.ktor.features.ContentNegotiation
 import io.ktor.features.DefaultHeaders
 import io.ktor.http.ContentType
-import io.ktor.jackson.JacksonConverter
 import io.ktor.response.respondText
 import io.ktor.routing.*
 import io.ktor.server.netty.*
-import org.slf4j.event.Level
 import kotlin.random.Random
 
-
 internal val mapper = jacksonObjectMapper()
+private data class OscillatorResponse(val v: List<Int>, val stddev: Double)
 
-data class OscillatorResponse(val v: List<Int>, val stddev: Double)
-
+/**
+ * Simple KTOR module
+ */
 fun Application.module() {
     install(DefaultHeaders)
 
@@ -34,32 +31,27 @@ fun Application.module() {
     }
 }
 
+/**
+ * Generate random list of size.
+ */
 private fun genRandom(size: Int) = List(size) { Random.nextInt(0, 100) }
 
 /**
- * Start the netty server to host the application.
+ * Extension Syntactic sugar: map list of numbers to standard deviation
  */
-fun main(args: Array<String>) {
-    EngineMain.main(args)
-}
-
-
-/**
- * Syntactic sugar
- */
-fun List<Number>.mean() : Double {
-    return map(Number::toDouble).sum() / size
-}
-
-fun List<Number>.variance() : Double {
-    val mean = mean()
-    return map {
+internal fun List<Number>.standardDeviation() : Double {
+    val mean = map(Number::toDouble).sum() / size
+    val variance = map {
         val delta = it.toDouble() - mean
         delta * delta
     }.sum() / size
+    return StrictMath.sqrt(variance)
 }
 
-fun List<Number>.standardDeviation() : Double {
-    return StrictMath.sqrt(variance())
+/**
+ * Start the app server
+ */
+fun main(args: Array<String>) {
+    EngineMain.main(args)
 }
 
